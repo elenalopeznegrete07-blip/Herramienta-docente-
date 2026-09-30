@@ -1,0 +1,967 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Autoevaluación Docente - Matriz de Competencias y DAFO</title>
+
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8fafc;
+            color: #1e293b;
+        }
+
+        /* Smooth custom scrolling */
+        html {
+            scroll-behavior: smooth;
+        }
+
+        /* Styled radio selections for rubric items */
+        .rubric-option-input:checked + .rubric-option-card {
+            border-color: #2563eb;
+            background-color: #eff6ff;
+            box-shadow: 0 4px 14px 0 rgba(37, 99, 235, 0.15);
+        }
+
+        .rubric-option-input:checked + .rubric-option-card .badge-level {
+            background-color: #2563eb;
+            color: #ffffff;
+        }
+
+        .rubric-option-input:checked + .rubric-option-card .radio-indicator {
+            border-color: #2563eb;
+            background-color: #2563eb;
+        }
+
+        .rubric-option-input:checked + .rubric-option-card .radio-indicator::after {
+            content: '';
+            display: block;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background-color: #ffffff;
+        }
+
+        /* Image 1 DAFO Matrix Custom Color Matching */
+        .dafo-header-positive { background-color: #d1fae5; color: #065f46; } /* Light Green */
+        .dafo-header-negative { background-color: #fecdd3; color: #9f1239; } /* Light Red/Pink */
+        .dafo-header-internal { background-color: #e7e5e4; color: #44403c; } /* Light Tan/Ocre */
+        .dafo-header-external { background-color: #cbd5e1; color: #1e293b; } /* Light Slate/Blue */
+
+        .dafo-quadrant-f { background-color: #fef9c3; border-color: #fde047; } /* Soft Yellow */
+        .dafo-quadrant-d { background-color: #ffedd5; border-color: #fdba74; } /* Soft Orange/Peach */
+        .dafo-quadrant-o { background-color: #dcfce7; border-color: #86efac; } /* Soft Mint/Green */
+        .dafo-quadrant-a { background-color: #f3e8ff; border-color: #d8b4fe; } /* Soft Purple */
+
+        /* Image 2 Skill Matrix Diagram Styling */
+        .matrix-diagram-container {
+            position: relative;
+            width: 100%;
+            max-width: 850px;
+            margin: 0 auto;
+        }
+
+        /* Floating background circle glow for Image 2 */
+        .matrix-bg-glow {
+            background: radial-gradient(circle, rgba(238, 242, 255, 0.8) 0%, rgba(241, 245, 249, 0.2) 70%);
+            border-radius: 50%;
+        }
+
+        /* Large letters watermark for DAFO */
+        .watermark-letter {
+            font-size: 8rem;
+            line-height: 1;
+            font-weight: 900;
+            color: rgba(255, 255, 255, 0.7);
+            user-select: none;
+            pointer-events: none;
+        }
+
+        /* Print styles */
+        @media print {
+            body { background-color: #ffffff; color: #000000; }
+            .no-print { display: none !important; }
+            .print-break-inside { page-break-inside: avoid; }
+            #results-section { display: block !important; }
+            .shadow-xl, .shadow-md, .shadow-lg { box-shadow: none !important; }
+            .border { border-color: #cbd5e1 !important; }
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col">
+
+    <!-- Top Header -->
+    <header class="bg-indigo-900 text-white shadow-lg no-print">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 flex flex-col md:flex-row items-center justify-between gap-4">
+            <div class="flex items-center space-x-3">
+                <div class="p-3 bg-indigo-700/60 rounded-xl text-yellow-400">
+                    <i class="fa-solid fa-graduation-cap text-3xl"></i>
+                </div>
+                <div>
+                    <h1 class="text-2xl md:text-3xl font-extrabold tracking-tight">Rúbrica de Autoevaluación Docente</h1>
+                    <p class="text-indigo-200 text-sm">Evaluación de Competencias Científico-Didácticas</p>
+                </div>
+            </div>
+            <div class="flex items-center gap-3">
+                <button id="reset-top-btn" class="px-4 py-2 bg-indigo-800 hover:bg-indigo-700 rounded-lg text-sm font-medium transition text-indigo-100 flex items-center gap-2">
+                    <i class="fa-solid fa-rotate-right"></i> Reiniciar
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Sticky Progress Bar Banner -->
+    <div class="sticky top-0 z-40 bg-white/95 backdrop-blur border-b border-slate-200 shadow-sm no-print">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex flex-col sm:flex-row items-center justify-between gap-2">
+            <div class="flex items-center gap-3 w-full sm:w-auto">
+                <span class="text-xs font-bold uppercase tracking-wider text-slate-500">Progreso:</span>
+                <div class="w-full sm:w-48 bg-slate-200 h-3 rounded-full overflow-hidden">
+                    <div id="progress-bar" class="bg-indigo-600 h-full transition-all duration-300 w-0"></div>
+                </div>
+                <span id="progress-text" class="text-xs font-bold text-indigo-700 min-w-[80px]">0 de 15 (0%)</span>
+            </div>
+            <div class="text-xs text-slate-500 font-medium">
+                Selecciona un nivel en los 15 ítems para calcular la Matriz y el DAFO
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Container -->
+    <main class="flex-grow max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-12">
+
+        <!-- Instructions Banner -->
+        <section class="bg-white rounded-2xl p-6 shadow-sm border border-slate-200 no-print">
+            <div class="flex items-start gap-4">
+                <div class="p-3 bg-blue-50 text-blue-600 rounded-xl hidden sm:block">
+                    <i class="fa-solid fa-circle-info text-2xl"></i>
+                </div>
+                <div class="space-y-1">
+                    <h2 class="text-lg font-bold text-slate-800">¿Cómo funciona la autoevaluación?</h2>
+                    <p class="text-sm text-slate-600 leading-relaxed">
+                        Lee atentamente cada ítem observable agrupado en las 4 competencias docentes. Selecciona la descripción que mejor refleje tu práctica actual (del Nivel 1 al Nivel 4). Al completar el cuestionario, haz clic en <strong class="text-indigo-700">"Generar Diagnóstico"</strong> para visualizar tu <strong class="text-indigo-700">Matriz de Competencias</strong> y la <strong class="text-indigo-700">Matriz DAFO</strong> personalizada con recomendaciones estratégicas.
+                    </p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Form Section -->
+        <form id="assessment-form" onsubmit="return false;" class="space-y-10 no-print">
+            <div id="rubric-items-container" class="space-y-10">
+                <!-- Dynamically populated via JS -->
+            </div>
+
+            <!-- Submit Button Area -->
+            <div class="bg-white rounded-2xl p-8 shadow-md border border-slate-200 text-center space-y-4">
+                <button type="button" id="generate-btn" class="w-full sm:w-auto px-10 py-4 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-lg rounded-xl shadow-lg hover:shadow-indigo-500/25 transition transform hover:-translate-y-0.5 active:translate-y-0 flex items-center justify-center mx-auto gap-3">
+                    <i class="fa-solid fa-chart-pie text-xl"></i>
+                    Generar Diagnóstico DAFO y Matriz
+                </button>
+                <p id="error-message" class="text-red-600 font-semibold text-sm hidden flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-triangle-exclamation"></i>
+                    Por favor, responde a todos los 15 ítems observables antes de continuar.
+                </p>
+            </div>
+        </form>
+
+        <!-- RESULTS SECTION (Initially Hidden) -->
+        <section id="results-section" class="hidden space-y-16 pt-4">
+
+            <!-- Section Title -->
+            <div class="text-center space-y-2 border-b border-slate-200 pb-6">
+                <span class="px-3 py-1 bg-indigo-100 text-indigo-800 text-xs font-bold uppercase tracking-widest rounded-full">Informe Competencial</span>
+                <h2 class="text-3xl md:text-4xl font-extrabold text-slate-900">Diagnóstico de Autoevaluación Docente</h2>
+                <p class="text-slate-600 max-w-2xl mx-auto text-sm md:text-base">
+                    Análisis integral de competencias docentes mediante Matriz de Habilidades y Matriz DAFO (Fortalezas, Debilidades, Oportunidades y Amenazas).
+                </p>
+            </div>
+
+            <!-- 1. MATRIZ DE COMPETENCIAS (Inspirada en Imagen 2) -->
+            <div class="bg-white rounded-3xl p-6 md:p-10 shadow-xl border border-slate-200 space-y-8 print-break-inside">
+                <div class="flex flex-col sm:flex-row items-center justify-between border-b pb-4 gap-2">
+                    <div>
+                        <h3 class="text-2xl font-bold text-slate-800 flex items-center gap-3">
+                            <i class="fa-solid fa-diagram-project text-indigo-600"></i>
+                            Matriz de Competencias
+                        </h3>
+                        <p class="text-xs text-slate-500">Distribución de puntuaciones y nivel global por categoría</p>
+                    </div>
+                    <span class="text-xs font-semibold px-3 py-1 bg-slate-100 text-slate-600 rounded-full">
+                        Escala 1 a 4 Puntos por Ítem
+                    </span>
+                </div>
+
+                <!-- DIAGRAM CONTAINER (Visual layout strictly matching Image 2) -->
+                <div class="matrix-diagram-container p-4 md:p-8">
+                    <div class="matrix-bg-glow absolute inset-0 -z-10"></div>
+
+                    <!-- SVG Connection Lines and Vertex Dots -->
+                    <svg class="absolute inset-0 w-full h-full pointer-events-none z-0" xmlns="http://www.w3.org/2000/svg">
+                        <!-- Top-Left to Center -->
+                        <line x1="25%" y1="22%" x2="50%" y2="50%" stroke="#94a3b8" stroke-width="2" stroke-dasharray="4" />
+                        <!-- Top-Right to Center -->
+                        <line x1="75%" y1="22%" x2="50%" y2="50%" stroke="#94a3b8" stroke-width="2" stroke-dasharray="4" />
+                        <!-- Bottom-Left to Center -->
+                        <line x1="25%" y1="78%" x2="50%" y2="50%" stroke="#94a3b8" stroke-width="2" stroke-dasharray="4" />
+                        <!-- Bottom-Right to Center -->
+                        <line x1="75%" y1="78%" x2="50%" y2="50%" stroke="#94a3b8" stroke-width="2" stroke-dasharray="4" />
+
+                        <!-- Diamond outline connecting the 4 colored vertices -->
+                        <polygon points="50,150 400,20 750,150 400,280" fill="none" stroke="#cbd5e1" stroke-width="1.5" class="hidden md:block"/>
+
+                        <!-- Colored Vertex Dots (Matching Image 2 style) -->
+                        <circle cx="50%" cy="32%" r="8" fill="#3b82f6" stroke="#ffffff" stroke-width="3" /> <!-- Blue -->
+                        <circle cx="35%" cy="50%" r="8" fill="#8b5cf6" stroke="#ffffff" stroke-width="3" /> <!-- Purple -->
+                        <circle cx="65%" cy="50%" r="8" fill="#10b981" stroke="#ffffff" stroke-width="3" /> <!-- Emerald -->
+                        <circle cx="50%" cy="68%" r="8" fill="#f43f5e" stroke="#ffffff" stroke-width="3" /> <!-- Rose -->
+                    </svg>
+
+                    <!-- Central Node ("Matriz de Competencias" Diamond/Circle) -->
+                    <div class="flex justify-center items-center my-8 md:my-16 z-10 relative">
+                        <div class="w-44 h-44 md:w-52 md:h-52 bg-white rounded-full shadow-2xl border-4 border-indigo-100 flex flex-col items-center justify-center p-4 text-center transform hover:scale-105 transition">
+                            <div class="w-10 h-10 rounded-full bg-indigo-50 text-indigo-600 flex items-center justify-center mb-1">
+                                <i class="fa-solid fa-shapes text-lg"></i>
+                            </div>
+                            <h4 class="text-base md:text-lg font-black text-indigo-950 leading-tight">Matriz de Competencias</h4>
+                            <span id="global-total-badge" class="mt-2 px-3 py-1 bg-indigo-600 text-white text-xs font-bold rounded-full shadow-sm">
+                                -- / 60 pts
+                            </span>
+                        </div>
+                    </div>
+
+                    <!-- 4 Outer Nodes (Positioned around the center in 2x2 grid on mobile, diamond style on desktop) -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-16 z-10 relative">
+                        
+                        <!-- Node 1: Específicas (Ciencia) -->
+                        <div class="bg-white rounded-2xl p-5 shadow-lg border-2 border-blue-200 hover:border-blue-500 transition space-y-3 relative group">
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center gap-2">
+                                    <span class="w-3 h-3 rounded-full bg-blue-500 inline-block"></span>
+                                    <h4 class="font-bold text-slate-800 text-base">Específicas (Ciencia)</h4>
+                                </div>
+                                <span id="cat1-score" class="text-xs font-extrabold px-2.5 py-1 bg-blue-50 text-blue-700 rounded-lg">
+                                    0 / 12 pts
+                                </span>
+                            </div>
+                            <p class="text-xs text-slate-500">Conocimiento histórico, conceptual y epistemológico de la ciencia.</p>
+                            <div class="space-y-1">
+                                <div class="flex justify-between text-xs font-semibold">
+                                    <span id="cat1-level-text" class="text-blue-600">Nivel --</span>
+                                    <span id="cat1-percent" class="text-slate-600">0%</span>
+                                </div>
+                                <div class="w-full bg-slate-100 h-2.5 rounded-full overflow-hidden">
+                                    <div id="cat1-bar" class="bg-blue-500 h-full w-0 transition-all duration-500"></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Node 2: Pedagógicas y Didácticas -->
+                        <div class="bg-white rounded-2xl p-5 shadow-lg border-2 border-purple-200 hover:border-purple-500 transition space-y-3 relative group">
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center gap-2">
+                                    <span class="w-3 h-3 rounded-full bg-purple-500 inline-block"></span>
+                                    <h4 class="font-bold text-slate-800 text-base">Pedagógicas y Didácticas</h4>
+                                </div>
+                                <span id="cat2-score" class="text-xs font-extrabold px-2.5 py-1 bg-purple-50 text-purple-700 rounded-lg">
+                                    0 / 24 pts
+                                </span>
+                            </div>
+                            <p class="text-xs text-slate-500">Planificación, unidades, recursos TIC, currículo y gestión del error.</p>
+                            <div class="space-y-1">
+                                <div class="flex justify-between text-xs font-semibold">
+                                    <span id="cat2-level-text" class="text-purple-600">Nivel --</span>
+                                    <span id="cat2-percent" class="text-slate-600">0%</span>
+                                </div>
+                                <div class="w-full bg-slate-100 h-2.5 rounded-full overflow-hidden">
+                                    <div id="cat2-bar" class="bg-purple-500 h-full w-0 transition-all duration-500"></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Node 3: Relaciones -->
+                        <div class="bg-white rounded-2xl p-5 shadow-lg border-2 border-emerald-200 hover:border-emerald-500 transition space-y-3 relative group">
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center gap-2">
+                                    <span class="w-3 h-3 rounded-full bg-emerald-500 inline-block"></span>
+                                    <h4 class="font-bold text-slate-800 text-base">Relaciones</h4>
+                                </div>
+                                <span id="cat3-score" class="text-xs font-extrabold px-2.5 py-1 bg-emerald-50 text-emerald-700 rounded-lg">
+                                    0 / 8 pts
+                                </span>
+                            </div>
+                            <p class="text-xs text-slate-500">Clima afectivo, empatía, eliminación de etiquetas e inclusión.</p>
+                            <div class="space-y-1">
+                                <div class="flex justify-between text-xs font-semibold">
+                                    <span id="cat3-level-text" class="text-emerald-600">Nivel --</span>
+                                    <span id="cat3-percent" class="text-slate-600">0%</span>
+                                </div>
+                                <div class="w-full bg-slate-100 h-2.5 rounded-full overflow-hidden">
+                                    <div id="cat3-bar" class="bg-emerald-500 h-full w-0 transition-all duration-500"></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Node 4: Docente Responsable -->
+                        <div class="bg-white rounded-2xl p-5 shadow-lg border-2 border-rose-200 hover:border-rose-500 transition space-y-3 relative group">
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center gap-2">
+                                    <span class="w-3 h-3 rounded-full bg-rose-500 inline-block"></span>
+                                    <h4 class="font-bold text-slate-800 text-base">Docente Responsable</h4>
+                                </div>
+                                <span id="cat4-score" class="text-xs font-extrabold px-2.5 py-1 bg-rose-50 text-rose-700 rounded-lg">
+                                    0 / 16 pts
+                                </span>
+                            </div>
+                            <p class="text-xs text-slate-500">Innovación, trabajo colaborativo, investigación-acción y autocrítica.</p>
+                            <div class="space-y-1">
+                                <div class="flex justify-between text-xs font-semibold">
+                                    <span id="cat4-level-text" class="text-rose-600">Nivel --</span>
+                                    <span id="cat4-percent" class="text-slate-600">0%</span>
+                                </div>
+                                <div class="w-full bg-slate-100 h-2.5 rounded-full overflow-hidden">
+                                    <div id="cat4-bar" class="bg-rose-500 h-full w-0 transition-all duration-500"></div>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+
+            <!-- 2. MATRIZ DAFO / SWOT (Estructura de cuadrante idéntica a la Imagen 1) -->
+            <div class="bg-white rounded-3xl p-6 md:p-10 shadow-xl border border-slate-200 space-y-8 print-break-inside">
+                <div class="border-b pb-4">
+                    <h3 class="text-2xl font-bold text-slate-800 flex items-center gap-3">
+                        <i class="fa-solid fa-table-cells-large text-indigo-600"></i>
+                        Matriz DAFO / SWOT
+                    </h3>
+                    <p class="text-xs text-slate-500">Análisis estratégico de factores internos (Fortalezas y Debilidades) y externos (Oportunidades y Amenazas)</p>
+                </div>
+
+                <!-- 2x2 DAFO Matrix Grid Layout matching Image 1 -->
+                <div class="overflow-x-auto">
+                    <div class="min-w-[700px] grid grid-cols-[100px_1fr_1fr] grid-rows-[50px_1fr_1fr] gap-3">
+                        
+                        <!-- Top-Left Corner Cell (Empty spacer) -->
+                        <div></div>
+
+                        <!-- Top Column Headers (Positivos / Negativos) -->
+                        <div class="dafo-header-positive rounded-xl flex items-center justify-center font-extrabold text-lg shadow-sm">
+                            Positivos
+                        </div>
+                        <div class="dafo-header-negative rounded-xl flex items-center justify-center font-extrabold text-lg shadow-sm">
+                            Negativos
+                        </div>
+
+                        <!-- ROW 1: Internos -->
+                        <div class="dafo-header-internal rounded-xl flex items-center justify-center font-extrabold text-lg shadow-sm">
+                            <span class="sm:-rotate-90 sm:whitespace-nowrap">Internos</span>
+                        </div>
+
+                        <!-- Quadrant F: FORTALEZAS -->
+                        <div class="dafo-quadrant-f rounded-2xl p-6 border-2 relative overflow-hidden flex flex-col justify-between shadow-sm min-h-[260px]">
+                            <div class="watermark-letter absolute top-2 right-4">F</div>
+                            <div class="relative z-10 space-y-3">
+                                <div class="flex items-center justify-between border-b border-yellow-300 pb-2">
+                                    <h4 class="text-2xl font-black text-yellow-900 tracking-wide">Fortalezas</h4>
+                                    <span id="f-count" class="text-xs font-bold px-2.5 py-0.5 bg-yellow-200 text-yellow-900 rounded-full">0 ítems</span>
+                                </div>
+                                <ul id="fortalezas-list" class="space-y-2 text-xs md:text-sm text-yellow-950 font-medium">
+                                    <!-- Dynamic content -->
+                                </ul>
+                            </div>
+                            <span class="text-[10px] font-bold uppercase tracking-wider text-yellow-700/80 mt-4 block">Puntos fuertes internos detectados (Nivel 3 o 4)</span>
+                        </div>
+
+                        <!-- Quadrant D: DEBILIDADES -->
+                        <div class="dafo-quadrant-d rounded-2xl p-6 border-2 relative overflow-hidden flex flex-col justify-between shadow-sm min-h-[260px]">
+                            <div class="watermark-letter absolute top-2 right-4">D</div>
+                            <div class="relative z-10 space-y-3">
+                                <div class="flex items-center justify-between border-b border-orange-300 pb-2">
+                                    <h4 class="text-2xl font-black text-orange-900 tracking-wide">Debilidades</h4>
+                                    <span id="d-count" class="text-xs font-bold px-2.5 py-0.5 bg-orange-200 text-orange-900 rounded-full">0 ítems</span>
+                                </div>
+                                <ul id="debilidades-list" class="space-y-2 text-xs md:text-sm text-orange-950 font-medium">
+                                    <!-- Dynamic content -->
+                                </ul>
+                            </div>
+                            <span class="text-[10px] font-bold uppercase tracking-wider text-orange-700/80 mt-4 block">Áreas internas de mejora prioritarias (Nivel 1 o 2)</span>
+                        </div>
+
+                        <!-- ROW 2: Externos -->
+                        <div class="dafo-header-external rounded-xl flex items-center justify-center font-extrabold text-lg shadow-sm">
+                            <span class="sm:-rotate-90 sm:whitespace-nowrap">Externos</span>
+                        </div>
+
+                        <!-- Quadrant O: OPORTUNIDADES -->
+                        <div class="dafo-quadrant-o rounded-2xl p-6 border-2 relative overflow-hidden flex flex-col justify-between shadow-sm min-h-[260px]">
+                            <div class="watermark-letter absolute top-2 right-4">O</div>
+                            <div class="relative z-10 space-y-3">
+                                <div class="flex items-center justify-between border-b border-emerald-300 pb-2">
+                                    <h4 class="text-2xl font-black text-emerald-900 tracking-wide">Oportunidades</h4>
+                                    <span class="text-xs font-bold px-2.5 py-0.5 bg-emerald-200 text-emerald-900 rounded-full">Desarrollo Pro</span>
+                                </div>
+                                <ul id="oportunidades-list" class="space-y-2 text-xs md:text-sm text-emerald-950 font-medium">
+                                    <!-- Dynamic content -->
+                                </ul>
+                            </div>
+                            <span class="text-[10px] font-bold uppercase tracking-wider text-emerald-700/80 mt-4 block">Estrategias de formación e innovación sugeridas</span>
+                        </div>
+
+                        <!-- Quadrant A: AMENAZAS -->
+                        <div class="dafo-quadrant-a rounded-2xl p-6 border-2 relative overflow-hidden flex flex-col justify-between shadow-sm min-h-[260px]">
+                            <div class="watermark-letter absolute top-2 right-4">A</div>
+                            <div class="relative z-10 space-y-3">
+                                <div class="flex items-center justify-between border-b border-purple-300 pb-2">
+                                    <h4 class="text-2xl font-black text-purple-900 tracking-wide">Amenazas</h4>
+                                    <span class="text-xs font-bold px-2.5 py-0.5 bg-purple-200 text-purple-900 rounded-full">Riesgos Aula</span>
+                                </div>
+                                <ul id="amenazas-list" class="space-y-2 text-xs md:text-sm text-purple-950 font-medium">
+                                    <!-- Dynamic content -->
+                                </ul>
+                            </div>
+                            <span class="text-[10px] font-bold uppercase tracking-wider text-purple-700/80 mt-4 block">Impactos negativos en el aprendizaje si no se interviene</span>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+
+            <!-- Print and Export Action Controls -->
+            <div class="flex flex-col sm:flex-row items-center justify-center gap-4 no-print pt-6">
+                <button id="print-btn" class="w-full sm:w-auto px-6 py-3 bg-slate-800 hover:bg-slate-900 text-white font-bold rounded-xl shadow transition flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-print"></i>
+                    Imprimir / Guardar Diagnóstico PDF
+                </button>
+                <button id="reset-bottom-btn" class="w-full sm:w-auto px-6 py-3 bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold rounded-xl transition flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-rotate-left"></i>
+                    Reiniciar Autoevaluación
+                </button>
+            </div>
+
+        </section>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-slate-900 text-slate-400 py-6 text-center text-xs no-print mt-12 border-t border-slate-800">
+        <p>Herramienta Interactiva de Autoevaluación de Competencias Docentes | Basado en Rúbrica Pedagógica de Ciencias</p>
+    </footer>
+
+    <script>
+        // Full Rubric Data Definition based on official document
+        const rubricData = [
+            {
+                id: 'cat1',
+                name: 'Específicas (ciencia)',
+                maxScore: 12,
+                items: [
+                    {
+                        id: 'item_1_1',
+                        code: '1.1',
+                        title: '1.1 Uso de episodios históricos de la ciencia',
+                        levels: [
+                            "No conozco episodios históricos de la ciencia ni los busco, por tanto, no los incluyo en trabajos.",
+                            "Conozco algunos episodios históricos de la ciencia, pero no los incluyo en mis trabajos.",
+                            "Conozco episodios históricos de la ciencia y los incluyo en los trabajos pero quedan poco conectados con el contenido y me costaría responder a preguntas sobre ellos.",
+                            "Conozco episodios históricos de la ciencia y los incluyo en los trabajos, justificando su relevancia."
+                        ],
+                        oppIfWeak: "Explorar historias de descubrimientos científicos y biografías inclusivas para integrarlas en unidades didácticas.",
+                        threatIfWeak: "Desconexión entre la ciencia escolar y su evolución histórica y contexto cultural."
+                    },
+                    {
+                        id: 'item_1_2',
+                        code: '1.2',
+                        title: '1.2 Dominio de conceptos científicos de primaria',
+                        levels: [
+                            "No entiendo los conceptos principales de las áreas científicas y me cuesta explicarlos.",
+                            "Conozco los conceptos básicos de algunas áreas pero en otras me surgen dudas y cometo errores al intentar explicarlos.",
+                            "Domino los conceptos clave del currículo científico de primaria y los explico de manera que solo sé dar una explicación cotidiana.",
+                            "Poseo conocimiento sólido y estructurado de todas las áreas científicas de primaria, explicándolas con claridad, rigor y adaptación al nivel escolar."
+                        ],
+                        oppIfWeak: "Participar en cursos de actualización de contenidos científicos y didáctica de las ciencias experimentales.",
+                        threatIfWeak: "Transmisión involuntaria de concepciones erróneas o explicaciones carentes de rigor."
+                    },
+                    {
+                        id: 'item_1_3',
+                        code: '1.3',
+                        title: '1.3 Naturaleza y visión de la ciencia',
+                        levels: [
+                            "Veo la ciencia como un conjunto de verdades fijas e incuestionables que consisten únicamente en memorizar datos y fórmulas.",
+                            "Entiendo que la ciencia cambia, pero en mis trabajos sigo presentando los contenidos como algo que no cambiará.",
+                            "Comprendo que la ciencia se basa en evidencias y cambia con el tiempo y lo reflejo en mis trabajos, aunque me cuesta explicar cómo se construyen las hipótesis.",
+                            "Comprendo la ciencia como una actividad dinámica y entiendo que las teorías se crean a partir de evidencias empíricas."
+                        ],
+                        oppIfWeak: "Implementar actividades de indagación basadas en evidencias empíricas y formulación de hipótesis.",
+                        threatIfWeak: "Fomento de una imagen dogmática y memorística de la ciencia como un saber estático."
+                    }
+                ]
+            },
+            {
+                id: 'cat2',
+                name: 'Pedagógicas y didácticas',
+                maxScore: 24,
+                items: [
+                    {
+                        id: 'item_2_1',
+                        code: '2.1',
+                        title: '2.1 Selección y estructuración de contenidos',
+                        levels: [
+                            "Me limito a copiar los contenidos de las diapositivas/libros de texto sin seleccionar lo más importante.",
+                            "Intento seleccionar ideas clave, pero me cuesta organizarlas y termino incluyendo un exceso de información.",
+                            "Selecciono y estructuro con orden los conceptos fundamentales de un tema, evitando el relleno, aunque la secuencia entre los conceptos podría ser más fluida.",
+                            "Selecciono con criterio propio los conceptos esenciales organizándolos de manera lógica y coherente para favorecer una comprensión profunda."
+                        ],
+                        oppIfWeak: "Utilizar mapas conceptuales y curación de contenidos para jerarquizar los aprendizajes imprescindibles.",
+                        threatIfWeak: "Sobrecarga cognitiva e infoxicación en el alumnado por falta de síntesis y estructura."
+                    },
+                    {
+                        id: 'item_2_2',
+                        code: '2.2',
+                        title: '2.2 Diseño de materiales didácticos propios',
+                        levels: [
+                            "No he diseñado materiales didácticos propios y dependo exclusivamente de recursos externos o libro de texto.",
+                            "He adaptado de forma sencilla algún material didáctico pero sin crear recursos didácticos propios desde cero.",
+                            "Diseño de materiales y recursos didácticos propios.",
+                            "Creo materiales didácticos originales y atractivos ajustados a los objetivos de aprendizaje."
+                        ],
+                        oppIfWeak: "Participar en talleres de creación de Recursos Educativos Abiertos (REA) y materiales manipulativos.",
+                        threatIfWeak: "Dependencia de libros de texto descontextualizados y rígidos."
+                    },
+                    {
+                        id: 'item_2_3',
+                        code: '2.3',
+                        title: '2.3 Secuenciación didáctica articulada a problemas reales',
+                        levels: [
+                            "No sé estructurar una unidad didáctica por etapas ni relacionarlas con problemas de la vida cotidiana.",
+                            "Planteo un problema cotidiano como introducción, pero el resto de la unidad se convierte en un desarrollo tradicional desconectado de ese problema.",
+                            "Secuencio la unidad en etapas vinculadas a un problema diario, aunque alguna fase queda menos desarrollada.",
+                            "Diseño una secuencia didáctica completa y articulada en etapas a partir de un problema cotidiano auténtico, guiando el aprendizaje hacia la resolución del problema."
+                        ],
+                        oppIfWeak: "Diseñar proyectos con metodología ABP (Aprendizaje Basado en Problemas) aplicados al entorno cercano.",
+                        threatIfWeak: "Falta de motivación y percepción de inutilidad de la ciencia por parte de los estudiantes."
+                    },
+                    {
+                        id: 'item_2_4',
+                        code: '2.4',
+                        title: '2.4 Integración reflexiva de recursos digitales',
+                        levels: [
+                            "No utilizo recursos digitales.",
+                            "Utilizo herramientas digitales pero de forma puramente transmisiva e ilustrativa, sin generar reflexión en la audiencia.",
+                            "Selecciono recursos digitales variados que invitan a la reflexión del espectador, aunque luego no genero el debate.",
+                            "Selecciono e integro recursos digitales interactivos y dinámicos que estimulan de forma efectiva la reflexión, discusión y pensamiento crítico."
+                        ],
+                        oppIfWeak: "Integrar simulaciones interactivas (ej. PhET) y herramientas de debate digital en el aula.",
+                        threatIfWeak: "Uso pasivo de la tecnología que no genera desarrollo cognitivo ni discusión crítica."
+                    },
+                    {
+                        id: 'item_2_5',
+                        code: '2.5',
+                        title: '2.5 Uso del currículo y desarrollo evolutivo',
+                        levels: [
+                            "No consulto el currículo oficial ni tengo en cuenta el nivel de desarrollo evolutivo del alumnado.",
+                            "Consulto el currículo oficial para elegir los contenidos, pero planteo actividades sin tener en cuenta el nivel de desarrollo evolutivo.",
+                            "Considero el currículo y el desarrollo evolutivo del alumnado al diseñar propuestas.",
+                            "En mis propuestas, utilizo el currículo oficial y tengo en cuenta el desarrollo evolutivo del alumnado."
+                        ],
+                        oppIfWeak: "Profundizar en los Saberes Básicos de la LOMLOE y los estadios evolutivos del pensamiento infantil.",
+                        threatIfWeak: "Diseño de tareas desajustadas (demasiado complejas o demasiado frívolas para la edad)."
+                    },
+                    {
+                        id: 'item_2_6',
+                        code: '2.6',
+                        title: '2.6 Gestión del error como oportunidad de aprendizaje',
+                        levels: [
+                            "Veo el error del aprendiz como un fallo o penalización que debe corregirse de inmediato.",
+                            "Acepto en teoría que el error forma parte del aprendizaje, pero en mis propuestas no preveo cómo trabajarlo o reconducirlo.",
+                            "Parto del error e ideas previas del aprendiz para construir un aprendizaje y esto queda reflejado en mis propuestas.",
+                            "Utilizo el error de manera intencionada para generar conflicto cognitivo, ayudando a que el aprendiz autorregule su pensamiento."
+                        ],
+                        oppIfWeak: "Implementar dinámicas de autoevaluación formativa y uso deliberado de preconcepciones en clase.",
+                        threatIfWeak: "Generación de miedo al fracaso, ansiedad escolar y penalización de la indagación."
+                    }
+                ]
+            },
+            {
+                id: 'cat3',
+                name: 'Relaciones',
+                maxScore: 8,
+                items: [
+                    {
+                        id: 'item_3_1',
+                        code: '3.1',
+                        title: '3.1 Dimensión afectiva y clima emocional',
+                        levels: [
+                            "No tengo en cuenta la dimensión afectiva y creo que el aprendizaje de la ciencia depende de la capacidad intelectual del alumno.",
+                            "Reconozco la importancia del clima afectivo y la empatía, pero me cuesta proponer estrategias concretas para reducir la ansiedad hacia las ciencias.",
+                            "Muestro empatía y paciencia en mis reflexiones y actividades, creando un ambiente acogedor que anima a participar sin miedo a equivocarse.",
+                            "Diseño y promuevo activamente un clima basado en la confianza, empatía y seguridad afectiva, ayudando a superar bloqueos y rechazos hacia la ciencia."
+                        ],
+                        oppIfWeak: "Integrar estrategias de educación emocional e indagación cooperativa libre de presiones.",
+                        threatIfWeak: "Rechazo emocional persistente y bloqueo ante el aprendizaje de las disciplinas STEM."
+                    },
+                    {
+                        id: 'item_3_2',
+                        code: '3.2',
+                        title: '3.2 Eliminación de etiquetas e inclusión (DUA)',
+                        levels: [
+                            "Mantengo etiquetas rígidas entre los alumnos “listos” y “torpes”, asumiendo que la capacidad es algo innato e inamovible.",
+                            "Cuestiono las etiquetas, pero en mis actividades diseño una única vía de trabajo sin ofrecer apoyos a ritmos diferentes.",
+                            "Entiendo los distintos ritmos de aprendizaje y propongo algunas variaciones en las tareas para responder a la diversidad del aula.",
+                            "Rechazo que los alumnos sean “torpes” o “listos” y planifico actividades que sean más flexibles con múltiples apoyos pedagógicos para que progresen todos."
+                        ],
+                        oppIfWeak: "Formarse en pautas del Diseño Universal para el Aprendizaje (DUA) con múltiples formas de representación y acción.",
+                        threatIfWeak: "Perpetuación del 'efecto Pigmalión' negativo y exclusión del alumnado con necesidades diversas."
+                    }
+                ]
+            },
+            {
+                id: 'cat4',
+                name: 'Docente responsable',
+                maxScore: 16,
+                items: [
+                    {
+                        id: 'item_4_1',
+                        code: '4.1',
+                        title: '4.1 Superación de la enseñanza tradicional',
+                        levels: [
+                            "Asumo las prácticas memorísticas y transmisivas que viví en la escuela como modelo a seguir para enseñar ciencias.",
+                            "Identifico algunas prácticas tradicionales que no me gustaron como estudiante, pero me cuesta pensar alternativas innovadoras.",
+                            "Cuestiono el pensamiento docente, entiendo que no debería de trabajar con una metodología tradicional, pero no sé innovar ni investigar.",
+                            "Analizo críticamente la enseñanza tradicional y entiendo por qué deben sustituirse por metodologías activas e investigadoras."
+                        ],
+                        oppIfWeak: "Participar en seminarios de innovación metodológica (metodología 5E, indagación guided inquiry).",
+                        threatIfWeak: "Repetición acrítica de modelos tradicionales memorísticos poco efectivos."
+                    },
+                    {
+                        id: 'item_4_2',
+                        code: '4.2',
+                        title: '4.2 Trabajo en equipo y colaboración docente',
+                        levels: [
+                            "Me cuesta trabajar en grupo, prefiero las actividades individuales.",
+                            "Participo en trabajos en equipo, cumplo la parte que se me asigna.",
+                            "Trabajo colaborativamente en grupo, aportando ideas, escuchando activamente y llegando a acuerdos con los demás.",
+                            "Lidero y fomento proactivamente el trabajo colaborativo, optimizando la dinámica del grupo y garantizando el éxito conjunto."
+                        ],
+                        oppIfWeak: "Unirse a grupos de trabajo interdepartamentales y proyectos de co-docencia.",
+                        threatIfWeak: "Aislamiento profesional y falta de sinergia pedagógica."
+                    },
+                    {
+                        id: 'item_4_3',
+                        code: '4.3',
+                        title: '4.3 Docencia como Investigación-Acción',
+                        levels: [
+                            "Entiendo la docencia como la aplicación repetitiva de contenidos y técnicas que no deben ser cambiadas.",
+                            "Comprendo que la docencia puede mejorar con la práctica, pero no la planteo de forma sistemática como un proceso de investigación sobre el aula.",
+                            "Entiendo la docencia como una investigación-acción, evaluando el impacto de las metodologías empleadas para introducir mejoras en mis proyectos.",
+                            "Asumo plenamente la actitud investigadora, planteando hipótesis sobre mi labor docente y revisándolas sistemáticamente para mejorar de forma continua."
+                        ],
+                        oppIfWeak: "Diseñar un diario de aula reflexivo y evaluar sistemáticamente las innovaciones aplicadas.",
+                        threatIfWeak: "Estancamiento en la práctica educativa sin margen para la mejora continua."
+                    },
+                    {
+                        id: 'item_4_4',
+                        code: '4.4',
+                        title: '4.4 Autocrítica y apertura a la retroalimentación',
+                        levels: [
+                            "Me muestro defensivo ante las correcciones a mis trabajos y me cuesta reconocer errores.",
+                            "Acepto las observaciones de los demás, pero me cuesta realizar una autocrítica espontánea sobre mis propias producciones.",
+                            "Realizo una autocrítica constructiva de mi trabajo y acepto las sugerencias de mejora de profesores y compañeros.",
+                            "Busco activamente la retroalimentación de los demás y autoevalúo críticamente mis producciones como una oportunidad de desarrollo profesional."
+                        ],
+                        oppIfWeak: "Establecer sesiones de observación entre iguales (Peer Observation) y mentoría con docentes experimentados.",
+                        threatIfWeak: "Rigidez profesional y resistencia al cambio metodológico."
+                    }
+                ]
+            }
+        ];
+
+        // Initialize Rubric DOM
+        document.addEventListener('DOMContentLoaded', () => {
+            renderRubricForm();
+            setupEventListeners();
+        });
+
+        function renderRubricForm() {
+            const container = document.getElementById('rubric-items-container');
+            container.innerHTML = '';
+
+            rubricData.forEach((category) => {
+                const categoryCard = document.createElement('div');
+                categoryCard.className = 'bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden space-y-6';
+
+                // Category Banner
+                const categoryHeader = document.createElement('div');
+                categoryHeader.className = 'bg-slate-900 text-white p-6 flex items-center justify-between';
+                categoryHeader.innerHTML = `
+                    <div>
+                        <span class="text-xs font-bold uppercase tracking-widest text-indigo-400">Categoría</span>
+                        <h3 class="text-xl md:text-2xl font-bold">${category.name}</h3>
+                    </div>
+                    <span class="text-xs bg-indigo-900 border border-indigo-700 text-indigo-200 font-semibold px-3 py-1 rounded-full">
+                        ${category.items.length} Ítems
+                    </span>
+                `;
+                categoryCard.appendChild(categoryHeader);
+
+                const itemsWrapper = document.createElement('div');
+                itemsWrapper.className = 'p-6 space-y-8';
+
+                category.items.forEach((item) => {
+                    const itemDiv = document.createElement('div');
+                    itemDiv.className = 'space-y-4 border-b border-slate-100 pb-8 last:border-b-0 last:pb-0';
+
+                    const itemTitle = document.createElement('h4');
+                    itemTitle.className = 'text-base md:text-lg font-bold text-slate-800 flex items-center gap-2';
+                    itemTitle.innerHTML = `<span class="w-2 h-2 rounded-full bg-indigo-600"></span> ${item.title}`;
+                    itemDiv.appendChild(itemTitle);
+
+                    const optionsGrid = document.createElement('div');
+                    optionsGrid.className = 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4';
+
+                    item.levels.forEach((levelText, idx) => {
+                        const levelNum = idx + 1;
+                        const optionId = `${item.id}_lvl_${levelNum}`;
+
+                        const label = document.createElement('label');
+                        label.htmlFor = optionId;
+                        label.className = 'cursor-pointer block h-full';
+
+                        label.innerHTML = `
+                            <input type="radio" id="${optionId}" name="${item.id}" value="${levelNum}" 
+                                   data-category="${category.id}" data-item-id="${item.id}"
+                                   class="rubric-option-input hidden" onchange="updateProgress();">
+                            <div class="rubric-option-card border-2 border-slate-200 bg-slate-50/50 hover:bg-slate-50 hover:border-slate-300 rounded-xl p-4 transition-all duration-200 h-full flex flex-col justify-between space-y-3">
+                                <div class="flex items-center justify-between">
+                                    <span class="badge-level text-xs font-bold px-2.5 py-1 bg-slate-200 text-slate-700 rounded-md transition">
+                                        Nivel ${levelNum}
+                                    </span>
+                                    <span class="text-xs font-semibold text-slate-400">
+                                        ${levelNum} pt${levelNum > 1 ? 's' : ''}
+                                    </span>
+                                </div>
+                                <p class="text-xs text-slate-700 leading-relaxed flex-grow">
+                                    ${levelText}
+                                </p>
+                                <div class="flex items-center justify-end pt-2">
+                                    <div class="radio-indicator w-5 h-5 rounded-full border-2 border-slate-300 flex items-center justify-center transition"></div>
+                                </div>
+                            </div>
+                        `;
+                        optionsGrid.appendChild(label);
+                    });
+
+                    itemDiv.appendChild(optionsGrid);
+                    itemsWrapper.appendChild(itemDiv);
+                });
+
+                categoryCard.appendChild(itemsWrapper);
+                container.appendChild(categoryCard);
+            });
+        }
+
+        function updateProgress() {
+            const totalQuestions = 15;
+            const checkedInputs = document.querySelectorAll('.rubric-option-input:checked');
+            const answeredCount = checkedInputs.length;
+            const percentage = Math.round((answeredCount / totalQuestions) * 100);
+
+            const progressBar = document.getElementById('progress-bar');
+            const progressText = document.getElementById('progress-text');
+
+            progressBar.style.width = `${percentage}%`;
+            progressText.innerText = `${answeredCount} de ${totalQuestions} (${percentage}%)`;
+
+            // Hide error message if actively responding
+            if (answeredCount === totalQuestions) {
+                document.getElementById('error-message').classList.add('hidden');
+            }
+        }
+
+        function setupEventListeners() {
+            document.getElementById('generate-btn').addEventListener('click', calculateAndRenderResults);
+            document.getElementById('reset-top-btn').addEventListener('click', resetAssessment);
+            document.getElementById('reset-bottom-btn').addEventListener('click', resetAssessment);
+            document.getElementById('print-btn').addEventListener('click', () => window.print());
+        }
+
+        function calculateAndRenderResults() {
+            const checkedInputs = document.querySelectorAll('.rubric-option-input:checked');
+            const totalQuestions = 15;
+
+            if (checkedInputs.length < totalQuestions) {
+                const errorMsg = document.getElementById('error-message');
+                errorMsg.classList.remove('hidden');
+                errorMsg.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                return;
+            }
+
+            document.getElementById('error-message').classList.add('hidden');
+
+            // Gather values
+            const userScores = {};
+            const itemLevels = {};
+
+            rubricData.forEach(cat => userScores[cat.id] = 0);
+
+            checkedInputs.forEach(input => {
+                const catId = input.dataset.category;
+                const itemId = input.dataset.itemId;
+                const val = parseInt(input.value);
+
+                userScores[catId] += val;
+                itemLevels[itemId] = val;
+            });
+
+            // Calculate Global Score
+            let globalTotal = 0;
+            Object.values(userScores).forEach(score => globalTotal += score);
+
+            document.getElementById('global-total-badge').innerText = `${globalTotal} / 60 pts (${Math.round((globalTotal/60)*100)}%)`;
+
+            // 1. UPDATE MATRIZ DE COMPETENCIAS (Diagram Image 2)
+            rubricData.forEach((cat, index) => {
+                const score = userScores[cat.id];
+                const max = cat.maxScore;
+                const pct = Math.round((score / max) * 100);
+
+                let levelLabel = '';
+                if (pct < 50) levelLabel = 'Nivel Inicial';
+                else if (pct < 70) levelLabel = 'En Desarrollo';
+                else if (pct < 90) levelLabel = 'Competente';
+                else levelLabel = 'Excelente';
+
+                const idx = index + 1;
+                document.getElementById(`cat${idx}-score`).innerText = `${score} / ${max} pts`;
+                document.getElementById(`cat${idx}-percent`).innerText = `${pct}%`;
+                document.getElementById(`cat${idx}-level-text`).innerText = `${levelLabel}`;
+
+                const bar = document.getElementById(`cat${idx}-bar`);
+                bar.style.width = `${pct}%`;
+            });
+
+            // 2. UPDATE MATRIZ DAFO / SWOT (Image 1 Structure)
+            const fortalezasList = document.getElementById('fortalezas-list');
+            const debilidadesList = document.getElementById('debilidades-list');
+            const oportunidadesList = document.getElementById('oportunidades-list');
+            const amenazasList = document.getElementById('amenazas-list');
+
+            fortalezasList.innerHTML = '';
+            debilidadesList.innerHTML = '';
+            oportunidadesList.innerHTML = '';
+            amenazasList.innerHTML = '';
+
+            let fortCount = 0;
+            let debCount = 0;
+
+            rubricData.forEach(cat => {
+                cat.items.forEach(item => {
+                    const level = itemLevels[item.id];
+                    const levelText = item.levels[level - 1];
+
+                    if (level >= 3) {
+                        // FORTALEZA
+                        fortCount++;
+                        const li = document.createElement('li');
+                        li.className = 'flex items-start gap-2 bg-yellow-100/80 p-2 rounded-lg border border-yellow-200';
+                        li.innerHTML = `
+                            <i class="fa-solid fa-circle-check text-yellow-700 mt-0.5 text-xs"></i>
+                            <div>
+                                <strong>[${item.code}] ${item.title}:</strong>
+                                <span class="text-yellow-900 block text-xs mt-0.5">${levelText}</span>
+                            </div>
+                        `;
+                        fortalezasList.appendChild(li);
+                    } else {
+                        // DEBILIDAD
+                        debCount++;
+                        const li = document.createElement('li');
+                        li.className = 'flex items-start gap-2 bg-orange-100/80 p-2 rounded-lg border border-orange-200';
+                        li.innerHTML = `
+                            <i class="fa-solid fa-triangle-exclamation text-orange-700 mt-0.5 text-xs"></i>
+                            <div>
+                                <strong>[${item.code}] ${item.title}:</strong>
+                                <span class="text-orange-900 block text-xs mt-0.5">${levelText}</span>
+                            </div>
+                        `;
+                        debilidadesList.appendChild(li);
+
+                        // OPORTUNIDAD (basada en la debilidad)
+                        const liOpp = document.createElement('li');
+                        liOpp.className = 'flex items-start gap-2 bg-emerald-100/80 p-2 rounded-lg border border-emerald-200';
+                        liOpp.innerHTML = `
+                            <i class="fa-solid fa-lightbulb text-emerald-700 mt-0.5 text-xs"></i>
+                            <div>
+                                <strong>Para Ítem ${item.code}:</strong> ${item.oppIfWeak}
+                            </div>
+                        `;
+                        oportunidadesList.appendChild(liOpp);
+
+                        // AMENAZA (riesgo pedagógico)
+                        const liThreat = document.createElement('li');
+                        liThreat.className = 'flex items-start gap-2 bg-purple-100/80 p-2 rounded-lg border border-purple-200';
+                        liThreat.innerHTML = `
+                            <i class="fa-solid fa-shield-cat text-purple-700 mt-0.5 text-xs"></i>
+                            <div>
+                                <strong>Riesgo en Ítem ${item.code}:</strong> ${item.threatIfWeak}
+                            </div>
+                        `;
+                        amenazasList.appendChild(liThreat);
+                    }
+                });
+            });
+
+            document.getElementById('f-count').innerText = `${fortCount} ítems`;
+            document.getElementById('d-count').innerText = `${debCount} ítems`;
+
+            // If no weaknesses found
+            if (debCount === 0) {
+                debilidadesList.innerHTML = `<li class="p-2 bg-orange-50 text-orange-800 rounded-lg italic">¡Excelente! No se detectaron debilidades críticas en ningún ítem.</li>`;
+                
+                oportunidadesList.innerHTML = `
+                    <li class="p-2 bg-emerald-100/80 rounded-lg border border-emerald-200">
+                        <i class="fa-solid fa-star text-emerald-700 mr-1"></i>
+                        Liderar seminarios de innovación educativa e investigación-acción en tu centro pedagógico.
+                    </li>
+                    <li class="p-2 bg-emerald-100/80 rounded-lg border border-emerald-200">
+                        <i class="fa-solid fa-star text-emerald-700 mr-1"></i>
+                        Publicar secuencias didácticas de ciencias en repositorios de Recursos Educativos Abiertos (REA).
+                    </li>
+                `;
+
+                amenazasList.innerHTML = `
+                    <li class="p-2 bg-purple-100/80 rounded-lg border border-purple-200">
+                        <i class="fa-solid fa-triangle-exclamation text-purple-700 mr-1"></i>
+                        Acomodamiento en la zona de confort si no se busca actualización científica constante.
+                    </li>
+                `;
+            }
+
+            // Show results and smooth scroll
+            const resultsSection = document.getElementById('results-section');
+            resultsSection.classList.remove('hidden');
+            resultsSection.scrollIntoView({ behavior: 'smooth' });
+        }
+
+        // RESET FUNCTION
+        function resetAssessment() {
+            document.getElementById('assessment-form').reset();
+            updateProgress();
+            document.getElementById('results-section').classList.add('hidden');
+            document.getElementById('error-message').classList.add('hidden');
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+    </script>
+</body>
+</html>
